@@ -31,5 +31,5 @@ func main() {
 		os.Exit(0)
 	}
 
-	fmt.Printf("Hello, %s!\n", *name)
+	fmt.Printf("Hello, %s!!\n", *name)
 }
