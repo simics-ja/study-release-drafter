@@ -79,7 +79,7 @@ jobs:
 
       - name: Upload binaries to Release Draft
         run: |
-          gh release upload ${{ needs.release-draft.outputs.release_id }} ./artifacts/simple-cli-linux-amd64/simple-cli-${{ needs.release-draft.outputs.tag_name }}-linux-amd64 --clobber
-          gh release upload ${{ needs.release-draft.outputs.release_id }} ./artifacts/simple-cli-darwin-arm64/simple-cli-${{ needs.release-draft.outputs.tag_name }}-darwin-arm64 --clobber
+          gh release upload ${{ needs.release-draft.outputs.release_id }} ./artifacts/simple-cli-${{ needs.release-draft.outputs.tag_name }}-linux-amd64/simple-cli-${{ needs.release-draft.outputs.tag_name }}-linux-amd64 --clobber
+          gh release upload ${{ needs.release-draft.outputs.release_id }} ./artifacts/simple-cli-${{ needs.release-draft.outputs.tag_name }}-darwin-arm64/simple-cli-${{ needs.release-draft.outputs.tag_name }}-darwin-arm64 --clobber
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
