@@ -44,6 +44,12 @@ version-resolver:
   default: patch
 exclude-labels:
   - 'skip changelog'
+  - 'cicd'
+  - 'wontfix'
+  - 'question'
+  - 'help wanted'
+  - 'invalid'
+  - 'duplicate'
 template: |
   ## Changes
 
