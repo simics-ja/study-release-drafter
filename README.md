@@ -41,11 +41,11 @@ PRのラベルやタイトルから自動的にリリースノートを作成し
 `.github/release-drafter.yml`を作成し、以下を定義：
 
 **カテゴリ分類:**
-- 🚀 Features (feature, enhancement)
-- 🐛 Bug Fixes (fix, bugfix, bug)
-- 🧰 Maintenance (chore, maintenance)
-- 📚 Documentation (documentation, docs)
-- ⬆️ Dependencies (dependencies, deps)
+- Features (feature, enhancement)
+- Bug Fixes (fix, bugfix, bug)
+- Maintenance (chore, maintenance)
+- Documentation (documentation, docs)
+- Dependencies (dependencies, deps)
 
 **バージョン管理:**
 - Major: `major`ラベル
