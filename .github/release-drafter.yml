@@ -14,6 +14,7 @@ categories:
     labels:
       - 'security'
       - 'maintenance'
+      - 'cicd'
   - title: 'Documentation'
     labels:
       - 'documentation'
@@ -37,6 +38,7 @@ version-resolver:
       - 'bugfix'
       - 'security'
       - 'maintenance'
+      - 'cicd'
       - 'documentation'
       - 'dependencies'
   default: patch
