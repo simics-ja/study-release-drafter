@@ -1,4 +1,4 @@
-name: Release Drafter
+name: Update Release Draft
 
 on:
   push:
@@ -6,22 +6,78 @@ on:
       - main
   workflow_dispatch:
 
-  # pull_request event is required only for autolabeler
-  # pull_request:
-  #   types: [opened, reopened, synchronize]
-  #   branches:
-  #     - main
-
 permissions:
   contents: read
 
 jobs:
-  update_release_draft:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - os: linux
+            arch: amd64
+            output: simple-cli-linux-amd64
+          - os: darwin
+            arch: arm64
+            output: simple-cli-darwin-arm64
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.22.2'
+
+      - name: Build
+        run: |
+          GOOS=${{ matrix.os }} GOARCH=${{ matrix.arch }} go build -o ${{ matrix.output }} main.go
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.output }}
+          path: ${{ matrix.output }}
+
+  release-draft:
+    name: Release Draft
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: read
+    outputs:
+      release_id: ${{ steps.release-drafter.outputs.id }}
+      tag_name: ${{ steps.release-drafter.outputs.tag_name }}
+    steps:
+      # Get next version
+      - uses: release-drafter/release-drafter@v6
+        id: release-drafter
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  upload-binaries:
+    name: Upload Binaries
+    needs:
+      - build
+      - release-draft
     permissions:
       contents: write
       pull-requests: write
     runs-on: ubuntu-latest
     steps:
-      - uses: release-drafter/release-drafter@v6
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: ./artifacts
+
+      - name: Upload binaries to Release Draft
+        run: |
+          gh release upload ${{ needs.release-draft.outputs.release_id }} ./artifacts/simple-cli-linux-amd64/simple-cli-linux-amd64 --clobber --name "simple-cli-${TAG_NAME}-linux-amd64"
+          gh release upload ${{ needs.release-draft.outputs.release_id }} ./artifacts/simple-cli-darwin-arm64/simple-cli-darwin-arm64 --clobber --name "simple-cli-${TAG_NAME}-darwin-arm64"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
