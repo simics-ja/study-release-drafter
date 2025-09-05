@@ -10,18 +10,36 @@ permissions:
   contents: read
 
 jobs:
+  release-draft:
+    name: Release Draft
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: read
+    outputs:
+      release_id: ${{ steps.release-drafter.outputs.id }}
+      tag_name: ${{ steps.release-drafter.outputs.tag_name }}
+    steps:
+      # Get next version
+      - uses: release-drafter/release-drafter@v6
+        id: release-drafter
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
   build:
     name: Build
+    needs:
+      - release-draft
     runs-on: ubuntu-latest
     strategy:
       matrix:
         include:
           - os: linux
             arch: amd64
-            output: simple-cli-linux-amd64
+            output: simple-cli-${{ needs.release-draft.outputs.tag_name }}-linux-amd64
           - os: darwin
             arch: arm64
-            output: simple-cli-darwin-arm64
+            output: simple-cli-${{ needs.release-draft.outputs.tag_name }}-darwin-arm64
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -40,22 +58,6 @@ jobs:
         with:
           name: ${{ matrix.output }}
           path: ${{ matrix.output }}
-
-  release-draft:
-    name: Release Draft
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-      pull-requests: read
-    outputs:
-      release_id: ${{ steps.release-drafter.outputs.id }}
-      tag_name: ${{ steps.release-drafter.outputs.tag_name }}
-    steps:
-      # Get next version
-      - uses: release-drafter/release-drafter@v6
-        id: release-drafter
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   upload-binaries:
     name: Upload Binaries
@@ -77,7 +79,7 @@ jobs:
 
       - name: Upload binaries to Release Draft
         run: |
-          gh release upload ${{ needs.release-draft.outputs.release_id }} ./artifacts/simple-cli-linux-amd64/simple-cli-linux-amd64 --clobber --name "simple-cli-${TAG_NAME}-linux-amd64"
-          gh release upload ${{ needs.release-draft.outputs.release_id }} ./artifacts/simple-cli-darwin-arm64/simple-cli-darwin-arm64 --clobber --name "simple-cli-${TAG_NAME}-darwin-arm64"
+          gh release upload ${{ needs.release-draft.outputs.release_id }} ./artifacts/simple-cli-linux-amd64/simple-cli-linux-amd64 --clobber
+          gh release upload ${{ needs.release-draft.outputs.release_id }} ./artifacts/simple-cli-darwin-arm64/simple-cli-darwin-arm64 --clobber
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
