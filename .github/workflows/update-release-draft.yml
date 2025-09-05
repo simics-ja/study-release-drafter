@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+  workflow_dispatch:
 
   # pull_request event is required only for autolabeler
   # pull_request:
