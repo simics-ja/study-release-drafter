@@ -32,4 +32,5 @@ func main() {
 	}
 
 	fmt.Printf("Hello, %s!\n", *name)
+	fmt.Printf("aaaa, %s!\n", *name)
 }
