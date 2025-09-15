@@ -1,0 +1,71 @@
+name: Publish Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release version to publish (e.g., v0.1.0)'
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    name: Publish Release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Check if draft release exists
+        id: check-draft
+        run: |
+          # Get all draft releases
+          DRAFT_EXISTS=$(gh release list --limit 100 | grep -E "^${{ github.event.inputs.version }}\s+Draft" || echo "")
+
+          if [ -z "$DRAFT_EXISTS" ]; then
+            echo "Error: Draft release ${{ github.event.inputs.version }} not found"
+            echo "Available draft releases:"
+            gh release list --limit 100 | grep "Draft" || echo "No draft releases found"
+            exit 1
+          fi
+
+          echo "Found draft release: ${{ github.event.inputs.version }}"
+          echo "draft_found=true" >> $GITHUB_OUTPUT
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create Git tag
+        if: steps.check-draft.outputs.draft_found == 'true'
+        run: |
+          # Configure git
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          
+          # Check if tag already exists on remote
+          if git ls-remote --tags origin | grep -q "refs/tags/${{ github.event.inputs.version }}$"; then
+            echo "Tag ${{ github.event.inputs.version }} already exists on remote, deleting it..."
+            git push --delete origin "${{ github.event.inputs.version }}"
+            echo "Existing tag deleted"
+          fi
+          
+          # Create and push new tag
+          echo "Creating tag ${{ github.event.inputs.version }}"
+          git tag -a "${{ github.event.inputs.version }}" -m "Release ${{ github.event.inputs.version }}"
+          git push origin "${{ github.event.inputs.version }}"
+          echo "Tag ${{ github.event.inputs.version }} created and pushed"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Publish release
+        if: steps.check-draft.outputs.draft_found == 'true'
+        run: |
+          echo "Publishing release ${{ github.event.inputs.version }}..."
+          gh release edit "${{ github.event.inputs.version }}" --draft=false --latest
+
+          echo "Successfully published release ${{ github.event.inputs.version }}"
+          echo "View release: https://github.com/${{ github.repository }}/releases/tag/${{ github.event.inputs.version }}"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
